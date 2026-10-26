@@ -13,7 +13,7 @@
     const nq = (c) => S.exams.filter((x) => x.cat === c && x.status !== "draft").length;
     let h = `<div class="vhead"><div><h2>${ws ? ex.length + " ورقة عمل" : ex.length + " أداة"}</h2><p>${ws
         ? "ورقة العمل تُبنى من بنك الأسئلة، تُطبع لكل طالب بنموذج يناسب مستواه (أو تُحل إلكترونيًّا)، وتُرصد في النتاجات بأداة «ورقة العمل»."
-        : `الكويزات ${nq("quiz")} · الاختبارات ${nq("exam")} · رابط الطلبة: <a href="index.html" target="_blank">${esc(new URL("index.html", location.href).href)}</a>`}</p></div>
+        : `الكويزات ${nq("quiz")} · الاختبارات ${nq("exam")} · رابط الطلبة: <a href="students.html" target="_blank">${esc(new URL("students.html", location.href).href)}</a>`}</p></div>
       <div class="toolbar">${ws ? `<button class="btn primary" id="exNew">${ic("book", "sm")}ورقة عمل جديدة</button>`
         : `<button class="btn primary" id="exNew">${ic("file", "sm")}كويز / اختبار جديد</button><button class="btn outline sm" id="exLink">نسخ رابط الطلبة</button>`}</div></div>`;
     groups.forEach(([k, t]) => { const l = ex.filter((x) => x.state === k); if (l.length) h += `<div class="sect"><h3>${t} <span class="tiny">${l.length}</span></h3><div class="g2">` + l.map(card).join("") + "</div></div>"; });
@@ -21,7 +21,7 @@
       : T.empty("file", "لا اختبارات بعد", "أنشئ كويزًا أو اختبارًا يسحب من بنك الأسئلة لكل طالب مجموعة مختلفة.");
     el.innerHTML = h;
     el.querySelector("#exNew").onclick = () => editExam(null, ws ? "worksheet" : null);
-    const lk = el.querySelector("#exLink"); if (lk) lk.onclick = () => { const u = new URL("index.html", location.href).href; navigator.clipboard.writeText(u).then(() => toast("نُسخ: " + u), () => toast(u)); };
+    const lk = el.querySelector("#exLink"); if (lk) lk.onclick = () => { const u = new URL("students.html", location.href).href; navigator.clipboard.writeText(u).then(() => toast("نُسخ: " + u), () => toast(u)); };
     bind(el);
     if (ex.some((x) => x.state === "open")) T.every(30000, async () => { await T.refreshExams(); if (S.cur === (ws ? "sheets" : "exams")) T.route(); });
   }

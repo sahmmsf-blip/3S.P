@@ -150,7 +150,7 @@
     };
   }
   async function qrScreen(id) {
-    const url = location.href.split("#")[0].replace(/teacher\.html.*$/, "index.html") + "#/go/" + id;
+    const url = location.href.split("#")[0].replace(/teacher\.html.*$/, "students.html") + "#/go/" + id;
     const ov = document.createElement("div"); ov.className = "qrov"; ov.id = "qrov";
     ov.innerHTML = `<button class="hw-x" aria-label="إغلاق">✕</button><div class="qr-in"><h2>بطاقة الخروج — ${esc(T.sec().name)}</h2>
       <div class="qr-c" id="qrC"></div><p class="qr-u" dir="ltr">${esc(url)}</p><p>امسح الرمز بكاميرا هاتفك، وادخل بحسابك، وأجب عن الأسئلة.</p>
@@ -203,7 +203,7 @@
         <div class="g2" style="margin-top:14px"><div class="card pad"><h3 style="font-size:16px;margin-bottom:10px">${ic("users", "sm")} أكثر المدارس</h3>
             ${(st.schools || []).length ? `<div class="tw"><table class="t"><thead><tr><th>المدرسة</th><th class="num">طلبة</th><th class="num">معلمون</th></tr></thead><tbody>${st.schools.map((x) => `<tr><td>${esc(x.school)}</td><td class="num">${x.st}</td><td class="num">${x.te}</td></tr>`).join("")}</tbody></table></div>` : '<p class="tiny">لا تسجيلات بعد.</p>'}</div>
           <div class="card pad"><h3 style="font-size:16px;margin-bottom:10px">${ic("spark", "sm")} رابط القسم العام</h3><p class="tiny">شاركه في قناتك ومع زملائك:</p>
-            <div class="row" style="gap:6px"><input class="input mono" id="vUrl" dir="ltr" readonly value="${esc(location.href.split("#")[0].replace(/teacher\.html.*$/, "learn.html"))}"><button class="btn outline sm" id="vCopy">نسخ</button></div></div></div>
+            <div class="row" style="gap:6px"><input class="input mono" id="vUrl" dir="ltr" readonly value="${esc(location.href.split("#")[0].replace(/teacher\.html.*$/, "index.html"))}"><button class="btn outline sm" id="vCopy">نسخ</button></div></div></div>
         <div class="card pad" style="margin-top:14px" id="vOrd"></div>
         <div class="card pad" style="margin-top:14px"><div class="row sp wrap"><h3 style="font-size:16px">${ic("list", "sm")} المسجّلون (${rows.length})</h3>
             <div class="row wrap" style="gap:6px"><input class="input sm" id="vQ" placeholder="بحث بالاسم أو المدرسة أو الهاتف" value="${esc(VF.q)}" style="width:220px">
@@ -213,13 +213,15 @@
       // ---- طلبات الطباعة (CliQ) ----
       const vmap = {}; rows.forEach((r) => (vmap[r.id] = r));
       const C = window.APP_CONFIG || {}, RN = { sum: "التجميعي", det: "التفصيلي", checklist: "الشطب", evidence: "القياس بالأدوات", verbal: "التقدير اللفظي", marks: "العلامات", attendance: "الحضور", daily: "الرصد اليومي" };
+      const subTxt = (o) => { const it = o.items || [], rc = it.filter((x) => x.startsWith("rec:")); return [rc.length >= 2 ? "كل السجلات" : rc.length ? "سجل " + (RN[rc[0].slice(4)] || "") : "", it.includes("ws") ? "أوراق العمل الاحترافية" : "", it.includes("wl") ? "الترويسة الخاصة" : "", it.includes("book") ? "الملزمة" : ""].filter(Boolean).join(" + "); };
       const ordHtml = () => { const pend = orders.filter((o) => o.status === "pending"), sumAct = orders.filter((o) => o.status === "active").reduce((a2, o) => a2 + Number(o.amount), 0);
         return `<div class="row sp wrap"><h3 style="font-size:16px">${ic("printer", "sm")} طلبات الطباعة المدفوعة</h3><span class="tiny">بانتظار التأكيد: <b>${pend.length}</b> · المُفعّل: <b>${T.nf(sumAct)}</b> دينار · الاسم المستعار CliQ: <b dir="ltr">${esc(C.CLIQ || "")}</b></span></div>
           <p class="tiny">تأكّد من وصول التحويل في تطبيق بنكك (اسم المحوِّل والمبلغ)، ثم اضغط «تفعيل» فتُفتح الطباعة عند المعلّم تلقائيًّا. الرمز الاحتياطي لمن يطبع من جهاز آخر.</p>` +
           (orders.length ? `<div class="tw"><table class="t"><thead><tr><th>#</th><th>المعلّم</th><th>الطلب</th><th class="num">المبلغ</th><th>اسم المحوِّل</th><th>التاريخ</th><th>الحالة</th><th></th></tr></thead><tbody>` + orders.map((o) => { const v = vmap[o.visitor_id] || {};
             const ph = String(v.phone || "").replace(/\D/g, ""), wa = ph ? "https://wa.me/962" + ph.slice(1) + "?text=" + encodeURIComponent("مرحبًا " + (v.name || "") + "، تم تفعيل طلبك رقم " + o.no + " على منصة السهم العلمي. يمكنك الطباعة الآن. وإن طبعت من جهاز آخر فرمز التفعيل: " + o.code) : "";
             return `<tr><td class="num">${o.no}</td><td>${esc(v.name || "—")}<div class="tiny" dir="ltr" style="text-align:right">${esc(v.phone || "")} · ${esc(v.school || "")}</div></td>
-              <td>${o.kind === "wl" ? "اختبار بترويسة خاصة: " + esc(o.section) : (o.records.length === 8 ? "كل السجلات" : o.records.map((r) => RN[r] || r).join("، ")) + "<div class='tiny'>" + esc(o.section) + " · " + o.n + " طالبًا</div>"}</td>
+              <td>${o.kind === "sub" || o.kind === "book" ? (o.kind === "book" ? "ملزمة طالب" : "اشتراك معلّم") + ": " + esc(subTxt(o)) + "<div class='tiny'>الصفوف: " + esc((o.grades || []).slice().sort((x, y) => x - y).join("، ")) + "</div>"
+                : o.kind === "wl" ? "اختبار بترويسة خاصة: " + esc(o.section) : (o.records.length === 8 ? "كل السجلات" : o.records.map((r) => RN[r] || r).join("، ")) + "<div class='tiny'>" + esc(o.section) + " · " + o.n + " طالبًا</div>"}</td>
               <td class="num"><b>${T.nf(Number(o.amount))}</b></td><td>${esc(o.payer || "—")}</td><td class="tiny">${esc(U.fmtDT(o.created_at, false))}</td>
               <td><span class="pill ${o.status === "active" ? "open" : o.status === "pending" ? "gold" : ""}">${o.status === "active" ? "مفعّل" : o.status === "pending" ? "بانتظارك" : "مرفوض"}</span><div class="tiny">رمز: <b dir="ltr">${esc(o.code)}</b></div></td>
               <td><div class="row wrap" style="gap:4px">${o.status !== "active" ? `<button class="btn primary sm" data-act="${o.id}">تفعيل</button>` : ""}${o.status === "pending" ? `<button class="btn ghost sm" data-rej="${o.id}">رفض</button>` : ""}${wa ? `<a class="btn outline sm" target="_blank" rel="noopener" href="${wa}">واتساب</a>` : ""}</div></td></tr>`; }).join("") + "</tbody></table></div>"

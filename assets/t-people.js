@@ -130,7 +130,7 @@
     };
   }
   function printCards(studs, sec) {
-    const url = new URL("index.html", location.href).href;
+    const url = new URL("students.html", location.href).href;
     const html = `<div class="cards">${studs.map((s) => `<div class="lc"><div class="lt">منصة السهم العلمي للاختبارات الذكية</div><b>${esc(s.full_name)}</b>
       <div>الشعبة: ${esc(sec.name)} · الرقم التسلسلي: ${s.serial_no}</div><div class="u">${esc(url)}</div>
       <div class="hint">ادخل برقمك الوطني وتاريخ ميلادك${s.national_id && s.birth_date ? "" : " — <b>بياناتك غير مكتملة، راجع المعلّم</b>"}</div></div>`).join("")}</div>`;

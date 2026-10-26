@@ -44,6 +44,7 @@
     users: '<circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 19.5c.9-3 3.3-4.8 6.5-4.8s5.6 1.8 6.5 4.8"/><path d="M15.5 5.2a3.5 3.5 0 0 1 0 6.6M17.5 14.9c2 .6 3.4 2.2 4 4.6"/>',
     key: '<circle cx="8" cy="15" r="4.5"/><path d="m11.2 11.8 8.3-8.3M16.5 6.5l2.5 2.5M14.5 8.5l2 2"/>'
   };
+  window.ICON_PATHS = P;
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" style="display:none">' +
     Object.keys(P).map((k) => `<symbol id="i-${k}" viewBox="0 0 24 24">${P[k]}</symbol>`).join("") + "</svg>";
   const host = document.createElement("div"); host.innerHTML = svg; document.body.prepend(host.firstChild);

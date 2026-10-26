@@ -37,8 +37,8 @@
   function buySheet(cfg) {   // cfg: {vid, me, kind, records, section, names, amount, label, onActive}
     const C = window.APP_CONFIG || {}, ph = String(C.CONTACT_PHONE || "").replace(/\D/g, ""), intl = ph.startsWith("0") ? "962" + ph.slice(1) : ph, alias = C.CLIQ || "sahm1990";
     const b = U.openSheet(`<h3>${ic("printer", "sm")} ${esc(cfg.label)}</h3>
-      <div class="pay-hero"><div><span class="tiny">المبلغ</span><b class="num">${cfg.amount === 0.5 ? "½" : cfg.amount}</b><span>دينار</span></div>
-        <div class="grow"><p>${cfg.kind === "wl" ? "اطبع اختبارك بترويستك الخاصة (اسمك ومدرستك والتاريخ)، دون اسم المنصة." : "اطبع السجلات بأسماء طلابك لشعبة «" + esc(cfg.section) + "» مرات غير محدودة حتى نهاية الفصل."}</p></div></div>
+      <div class="pay-hero"><div><span class="tiny">المبلغ</span><b class="num">${cfg.amount === 0.5 ? "½" : String(+cfg.amount).replace(/\.5$/, "½")}</b><span>دينار</span></div>
+        <div class="grow"><p>${cfg.desc ? esc(cfg.desc) : cfg.kind === "wl" ? "اطبع اختبارك بترويستك الخاصة (اسمك ومدرستك والتاريخ)، دون اسم المنصة." : "اطبع السجلات بأسماء طلابك لشعبة «" + esc(cfg.section) + "» مرات غير محدودة حتى نهاية الفصل."}</p></div></div>
       <ol class="pay-steps"><li>حوّل المبلغ عبر <b>CliQ</b> إلى الاسم المستعار: <span class="alias" dir="ltr">${esc(alias)}</span> <button class="btn ghost sm" id="pyCp">نسخ</button></li>
         <li><label class="field" style="margin:4px 0 0"><span>اسم المحوِّل كما يظهر في التحويل</span><input class="input" id="pyN" maxlength="80" value="${esc((cfg.me && cfg.me.name) || "")}"></label></li>
         <li>اضغط «أرسلت المبلغ»، وسنفعّل لك الطباعة فور التأكد من وصول التحويل.</li></ol>
@@ -48,7 +48,7 @@
     b.querySelector("#pyCp").onclick = () => { try { navigator.clipboard.writeText(alias); } catch (e) {} U.toast("نُسخ الاسم المستعار"); };
     let poll = null;
     const waitFor = (no, id) => {
-      const msg = encodeURIComponent(`مرحبًا، طلب طباعة رقم ${no} على منصة السهم العلمي.\nحوّلت ${cfg.amount} دينار عبر CliQ باسم: ${b.querySelector("#pyN").value.trim()}\nالاسم: ${(cfg.me && cfg.me.name) || ""} — ${(cfg.me && cfg.me.school) || ""}`);
+      const msg = encodeURIComponent(`مرحبًا، ${cfg.kind === "sub" ? "طلب اشتراك" : "طلب طباعة"} رقم ${no} على منصة السهم العلمي${cfg.label ? " (" + cfg.label + ")" : ""}.\nحوّلت ${cfg.amount} دينار عبر CliQ باسم: ${b.querySelector("#pyN").value.trim()}\nالاسم: ${(cfg.me && cfg.me.name) || ""} — ${(cfg.me && cfg.me.school) || ""}`);
       b.querySelector("#pySt").innerHTML = `<div class="pay-wait"><b>طلبك رقم ${no} — بانتظار تأكيد التحويل</b><span class="tiny">تُفتح الطباعة هنا تلقائيًّا بعد التأكيد. لتسريعه أرسل صورة التحويل:</span>
         ${intl ? `<a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/${intl}?text=${msg}">${ic("chat", "sm")}أرسل صورة التحويل على واتساب</a>` : ""}</div>`;
       clearInterval(poll); poll = setInterval(async () => { if (!document.getElementById("pySt")) { clearInterval(poll); return; }
@@ -56,7 +56,10 @@
     };
     b.querySelector("#pyGo").onclick = async () => {
       const btn = b.querySelector("#pyGo"); U.spin(btn, true, "جارٍ الإرسال…");
-      try { const r = await U.rpcFetch("public_order_create", { p_vid: cfg.vid, p_kind: cfg.kind, p_records: cfg.records || null, p_section: cfg.section || "", p_hashes: cfg.names ? hashes(cfg.names) : [], p_payer: b.querySelector("#pyN").value.trim() });
+      try { const payer = b.querySelector("#pyN").value.trim();
+        const r = cfg.kind === "sub" || cfg.kind === "book" ? await U.rpcFetch("public_sub_create", { p_vid: cfg.vid, p_grades: cfg.grades, p_items: cfg.items, p_payer: payer })
+          : await U.rpcFetch("public_order_create", { p_vid: cfg.vid, p_kind: cfg.kind, p_records: cfg.records || null, p_section: cfg.section || "", p_hashes: cfg.names ? hashes(cfg.names) : [], p_payer: payer });
+        if (r.ok && r.amount != null && +r.amount !== +cfg.amount) b.querySelector(".pay-hero b").textContent = String(+r.amount).replace(/\.5$/, "½");
         if (!r.ok) throw new Error(r.error); btn.classList.add("hide"); await loadOrders(cfg.vid, true); waitFor(r.no, r.id); }
       catch (e) { U.spin(btn, false); U.toast(e.message, true); }
     };
@@ -93,7 +96,7 @@
       if (k === "attendance") { const ym = ctx.month, days = schoolDays(ym), [y, m] = ym.split("-").map(Number);
         pages.push(["l", head("كشف الحضور والغياب", MONTHS[m - 1] + " " + y) + `<table class="vtab"><thead><tr><th class="c">م</th><th>اسم الطالب</th>${days.map((d) => `<th class="dy">${d}</th>`).join("")}<th>ح</th><th>غ</th><th>ت</th><th>ع</th></tr></thead><tbody>${rows(() => empty(days.length + 4, "sq"))}</tbody></table>
           <p class="nt">الرموز: ✓ حاضر · غ غائب · ت متأخر · ع غائب بعذر. أيام الدوام من الأحد إلى الخميس.</p>` + sign]); }
-      if (k === "daily") pages.push(["p", head("ورقة الرصد اليومي للحصة", "التاريخ: ........  الحصة: ........") + `<table class="vtab"><thead><tr><th class="c">م</th><th>اسم الطالب</th>${DAILY.map(vth).join("")}</tr></thead><tbody>${rows(() => empty(DAILY.length, "sq"))}</tbody></table>
+      if (k === "daily") pages.push(["p", head("ورقة الرصد اليومي للحصة", "التاريخ: ........  الحصة: ........") + `<table class="vtab"><thead><tr><th class="c">م</th><th>اسم الطالب</th>${DAILY.map((t) => (t === "تطبيق محاسبي صحيح" && ctx.g && ctx.g !== "12" ? "تطبيق صحيح لما تعلّمه" : t)).map(vth).join("")}</tr></thead><tbody>${rows(() => empty(DAILY.length, "sq"))}</tbody></table>
         <p class="nt">الأعمدة السبعة الأولى سلوكيات إيجابية، ثم سلوكيات تحتاج متابعة، وآخر عمودين للتحسّن والتنظيم. سجل تربوي لا يدخل في العلامة الرسمية.</p>`]);
     });
     return pages;

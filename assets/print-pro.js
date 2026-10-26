@@ -69,6 +69,9 @@
     table{width:100%;border-collapse:separate;border-spacing:0;font-size:10.5px;border:1.2px solid #9aa386;border-radius:10px;overflow:hidden;margin-bottom:10px}
     th{background:${OL};color:#fff;font-weight:600;padding:5px 7px;text-align:right}td{padding:4px 7px;border-top:1px solid #d5d9c8;vertical-align:top;line-height:1.65}
     td.c{text-align:center;white-space:nowrap}td.num{font-family:Arial,sans-serif;direction:ltr}.dots{letter-spacing:2px;color:${GD}}
+    .q .tb2{grid-column:2;margin:2px 0 4px;width:auto;min-width:55%;font-size:calc(10.5px*var(--s))}.q .tb2 th{padding:3px 8px}.q .tb2 td{padding:2px 8px;text-align:center}
+    .ftag{display:inline-block;border:1.5px solid ${GD};color:${OL};border-radius:999px;padding:0 10px;font-weight:800;font-size:11px;margin-inline-start:6px;vertical-align:middle}
+    table.ck td,table.ck th{text-align:center;padding:3px 4px;font-family:Arial,"IBM Plex Sans Arabic",sans-serif}table.ck td.nm{text-align:right;white-space:nowrap;font-family:"IBM Plex Sans Arabic",sans-serif}
     h3.sec{font-family:Amiri,serif;font-size:17px;color:${OL};margin:6px 0 4px;display:flex;align-items:center;gap:8px}h3.sec:before{content:"";width:5px;height:16px;border-radius:3px;background:${GD}}`;
   }
 
@@ -81,7 +84,7 @@
         const fits=function(){return kids.every(function(k,i){const sp=k.querySelector('span'),lh=parseFloat(getComputedStyle(sp).lineHeight)||16;return sp.scrollWidth<=sp.clientWidth+1&&sp.offsetHeight<=lines[i]*lh+2;});};
         const tryC=function(c){o.classList.remove('o4','o2','o1');o.classList.add(c);return fits();};
         if(!tryC('o4')&&!tryC('o2'))tryC('o1');});}
-      function pages(){const s=document.querySelector('.sheet.stu .in');return s?s.scrollHeight/PAGE:0;}
+      function pages(){var m=0;document.querySelectorAll('.sheet.stu .in').forEach(function(s){m=Math.max(m,s.scrollHeight/PAGE);});return m;}
       function fit(){const r=document.documentElement;let s=1;r.style.setProperty('--s',s);layout();
         if(MAX){while(pages()>MAX*0.94&&s>0.7){s=Math.round((s-0.04)*100)/100;r.style.setProperty('--s',s);layout();}}
         const n=Math.ceil(pages()*1.03);const el=document.getElementById('fitInfo');if(el)el.textContent='صفحات الطالب: '+Math.max(1,n)+(MAX&&n>MAX?' (كثيرة الأسئلة — قلّل العدد لتبقى صفحتين)':'');}
@@ -90,48 +93,58 @@
     })();<\/script>`;
   }
 
-  // q: [{s, opts, c, e, d, oc:"د٢/ن٣", ot:"نص النتاج", lesson}]
+  // q: [{s, opts, c, e, d, oc:"د٢/ن٣", ot:"نص النتاج", lesson, tb?:{head,rows}}]
   // o.wl: {directorate, school, teacher, exam, date, duration, marks, grade, section, term} → ترويسة المعلّم الخاصة بلا اسم المنصة
+  // o.forms: [{label:"نموذج أ", student:"اسم الطالب", questions:[...]}] → عدة نماذج أو نموذج لكل طالب (المفاتيح بعد أوراق الطلبة)
   function printPro(o) {
     const w = window.open("", "_blank");
     if (!w) { (window.U && U.toast) ? U.toast("اسمح للمتصفح بفتح نافذة جديدة للطباعة", true) : alert("اسمح بالنوافذ المنبثقة"); return null; }
-    const test = o.kind === "test", qs = o.questions, n = qs.length, site = o.site || location.host || "", wl = o.wl;
+    const forms = (o.forms && o.forms.length) ? o.forms : [{ label: "", student: "", questions: o.questions }];
+    const test = o.kind === "test", n = forms[0].questions.length, site = o.site || location.host || "", wl = o.wl;
     const kindName = test ? "اختبار" : "ورقة عمل";
     const lines = (t) => String(t).split("\n").length;
     const band = (tag) => `<div class="band">${logo(38, "#ffffff", OL, GD)}<div class="bn"><b>${PLATFORM}</b><span>${PLATFORM2}</span></div><div class="sp"></div>
       <div class="meta">${esc(o.subject || "")}<br>${esc(o.grade || "")}</div><span class="tag">${tag}</span></div>`;
-    const wlHead = (k) => `<div class="wl"><div class="r">المملكة الأردنية الهاشمية<br>وزارة التربية والتعليم<br>${wl.directorate ? "مديرية التربية والتعليم " + esc(wl.directorate) + "<br>" : ""}${esc(wl.school || "")}</div>
-      <div class="c"><h1>${esc(wl.exam || o.title)}${k ? "" : ""}</h1><span class="sb">${k ? "نموذج الإجابة" : "مبحث " + esc(o.subject || "")}</span></div>
+    const wlHead = (k, f) => `<div class="wl"><div class="r">المملكة الأردنية الهاشمية<br>وزارة التربية والتعليم<br>${wl.directorate ? "مديرية التربية والتعليم " + esc(wl.directorate) + "<br>" : ""}${esc(wl.school || "")}</div>
+      <div class="c"><h1>${esc(wl.exam || o.title)}</h1><span class="sb">${k ? "نموذج الإجابة" : "مبحث " + esc(o.subject || "")}</span>${f.label ? `<span class="ftag">${esc(f.label)}</span>` : ""}</div>
       <div class="l"><b>الصف:</b> ${esc(wl.grade || o.grade || "")}<br><b>التاريخ:</b> ${esc(wl.date || "")}<br><b>مدة الاختبار:</b> ${esc(wl.duration ? wl.duration + " دقيقة" : "")}<br><b>العلامة الكلية:</b> ${esc(wl.marks || n)}${wl.term ? "<br><b>الفصل:</b> " + esc(wl.term) : ""}</div></div>
-      ${k ? "" : `<div class="wl-st"><span>اسم الطالب:</span><span class="s">الشعبة: ${esc(wl.section || "")}</span><span class="s">العلامة: &nbsp;&nbsp;&nbsp;/ ${esc(wl.marks || n)}</span></div>`}`;
+      ${k ? "" : `<div class="wl-st"><span>اسم الطالب: ${esc(f.student || "")}</span><span class="s">الشعبة: ${esc(wl.section || "")}</span><span class="s">العلامة: &nbsp;&nbsp;&nbsp;/ ${esc(wl.marks || n)}</span></div>`}`;
     const foot = wl ? "" : `<div class="foot">${logo(15, OL, "#fff", GD)}<span>© ${PLATFORM} ${PLATFORM2} — جميع الحقوق محفوظة</span><span class="sp"></span><span dir="ltr">${esc(site)}</span></div>`;
     const wm = wl ? "" : `<div class="wm">${logo(400, "none", OL, GD)}</div>`;
-    const title = (sub) => `<div class="title"><div><h1>${esc(o.title)}</h1><h2>${esc(sub || o.subtitle || "")}</h2></div>
+    const title = (sub, f) => `<div class="title"><div><h1>${esc(o.title)}${f && f.label ? `<span class="ftag">${esc(f.label)}</span>` : ""}</h1><h2>${esc(sub || o.subtitle || "")}</h2></div>
       <div class="sc">${o.school ? esc(o.school) + "<br>" : ""}${o.teacher ? "المعلّم/ة: " + esc(o.teacher) : ""}</div></div><div class="rule"></div>`;
-    const info = `<div class="info"><div><b>اسم الطالب:</b></div><div><b>الصف/الشعبة:</b></div><div><b>التاريخ:</b></div>
+    const info = (f) => `<div class="info"><div><b>اسم الطالب:</b> ${esc(f.student || "")}</div><div><b>الصف/الشعبة:</b></div><div><b>التاريخ:</b></div>
       <div class="${test ? "mk" : ""}"><b>${test ? "العلامة:" : "عدد الأسئلة:"}</b> ${test ? "&nbsp;&nbsp;&nbsp; / " + (o.marks || n) : n}</div></div>`;
     const note = (test || o.instructions) ? `<div class="note"><b>تعليمات:</b> ${esc(o.instructions || ("أجب عن جميع الأسئلة الآتية وعددها (" + n + ")، بوضع دائرة حول رمز الإجابة الصحيحة." + ((wl ? wl.duration : o.duration) ? " مدة الاختبار: " + (wl ? wl.duration : o.duration) + " دقيقة." : "")))}</div>` : "";
-    const qh = qs.map((x, i) => `<div class="q"><span class="n">${i + 1}</span><div class="s">${esc(x.s)}</div>${o.showOutcome ? `<span class="oc">${esc(x.oc || "")}</span>` : ""}
+    const tbl = (t) => t && t.head ? `<table class="tb2"><thead><tr>${t.head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${t.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : "";
+    const qh = (qs) => qs.map((x, i) => `<div class="q"><span class="n">${i + 1}</span><div class="s">${esc(x.s)}</div>${o.showOutcome ? `<span class="oc">${esc(x.oc || "")}</span>` : ""}${tbl(x.tb)}
       <div class="o o4">${x.opts.map((t, j) => `<div data-l="${lines(t)}"><i>${AR[j]}</i><span>${esc(t)}</span></div>`).join("")}</div></div>`).join("");
-    const byOc = {}; qs.forEach((x, i) => { const k = (x.oc || "—") + "|" + (x.ot || ""); (byOc[k] = byOc[k] || []).push(i + 1); });
-    const spec = Object.entries(byOc).map(([k, v]) => { const [oc, ot] = k.split("|"); return `<tr><td class="c"><b>${esc(oc)}</b></td><td>${esc(ot)}</td><td class="c num">${v.join(", ")}</td><td class="c num">${v.length}</td></tr>`; }).join("");
-    const keyGrid = `<div class="kgrid">${qs.map((x, i) => `<div>${i + 1}<b>${AR[x.c]}</b></div>`).join("")}</div>`;
-    const keyTbl = `<table><thead><tr><th style="width:32px">#</th><th style="width:44px">الإجابة</th><th style="width:66px">النتاج</th><th style="width:58px">الصعوبة</th>${o.withExplain ? "<th>الشرح</th>" : "<th>الدرس</th>"}</tr></thead><tbody>` +
-      qs.map((x, i) => `<tr><td class="c num">${i + 1}</td><td class="c"><b>${AR[x.c]}</b></td><td class="c">${esc(x.oc || "")}</td><td class="c"><span class="dots">${"●".repeat(DIFF[x.d] || 1)}${"○".repeat(3 - (DIFF[x.d] || 1))}</span></td>${o.withExplain ? `<td>${esc(x.e || "")}</td>` : `<td>${esc(x.lesson || "")}</td>`}</tr>`).join("") + "</tbody></table>";
-    const head1 = wl ? wlHead(false) : band(kindName) + title() + info;
-    const head2 = wl ? wlHead(true) : band("مفتاح الإجابة — للمعلّم") + title("مفتاح الإجابة وجدول المواصفات");
-    const endLine = wl ? `<div class="end"><span>انتهت الأسئلة — مع تمنياتي لكم بالتوفيق</span><span>معلّم/ة المبحث: ${esc(wl.teacher || "")}</span></div>` : "";
+    const keyFull = (f) => { const qs = f.questions, byOc = {};
+      qs.forEach((x, i) => { const k = (x.oc || "—") + "|" + (x.ot || ""); (byOc[k] = byOc[k] || []).push(i + 1); });
+      const spec = Object.entries(byOc).map(([k, v]) => { const [oc, ot] = k.split("|"); return `<tr><td class="c"><b>${esc(oc)}</b></td><td>${esc(ot)}</td><td class="c num">${v.join(", ")}</td><td class="c num">${v.length}</td></tr>`; }).join("");
+      const keyGrid = `<div class="kgrid">${qs.map((x, i) => `<div>${i + 1}<b>${AR[x.c]}</b></div>`).join("")}</div>`;
+      const keyTbl = `<table><thead><tr><th style="width:32px">#</th><th style="width:44px">الإجابة</th><th style="width:66px">النتاج</th><th style="width:58px">الصعوبة</th>${o.withExplain ? "<th>الشرح</th>" : "<th>الدرس</th>"}</tr></thead><tbody>` +
+        qs.map((x, i) => `<tr><td class="c num">${i + 1}</td><td class="c"><b>${AR[x.c]}</b></td><td class="c">${esc(x.oc || "")}</td><td class="c"><span class="dots">${"●".repeat(DIFF[x.d] || 1)}${"○".repeat(3 - (DIFF[x.d] || 1))}</span></td>${o.withExplain ? `<td>${esc(x.e || "")}</td>` : `<td>${esc(x.lesson || "")}</td>`}</tr>`).join("") + "</tbody></table>";
+      const head2 = wl ? wlHead(true, f) : band("مفتاح الإجابة — للمعلّم") + title("مفتاح الإجابة وجدول المواصفات" + (f.note ? " — " + f.note : ""), f);
+      return `<section class="sheet">${wm}<div class="in">${head2}<h3 class="sec">الإجابات</h3>${keyGrid}<h3 class="sec">تفصيل الأسئلة</h3>${keyTbl}
+        <h3 class="sec">ربط الأسئلة بالنتاجات</h3><table><thead><tr><th style="width:66px">النتاج</th><th>نص النتاج</th><th style="width:110px">أرقام الأسئلة</th><th style="width:44px">العدد</th></tr></thead><tbody>${spec}</tbody></table>
+        </div>${foot}</section>`; };
+    // مفتاح مجمّع لعدد كبير من النماذج (نموذج لكل طالب)
+    const keyCombined = () => { const head2 = wl ? wlHead(true, { label: "" }) : band("مفتاح الإجابة — للمعلّم") + title("مفتاح الإجابة المجمّع لكل النماذج");
+      const cols = Array.from({ length: n }, (_, i) => i + 1);
+      return `<section class="sheet">${wm}<div class="in">${head2}<p class="tiny" style="font-size:10.5px;margin:4px 0 8px">لكل طالب نموذجه الخاص (أسئلة وترتيب مختلفان). صحّح ورقة كل طالب من سطره.</p>
+        <table class="ck"><thead><tr><th>النموذج / الطالب</th>${cols.map((c) => `<th>${c}</th>`).join("")}</tr></thead><tbody>${forms.map((f) => `<tr><td class="nm">${esc(f.student || f.label)}</td>${f.questions.map((x) => `<td><b>${AR[x.c]}</b></td>`).join("")}</tr>`).join("")}</tbody></table></div>${foot}</section>`; };
+    const stuSheet = (f) => { const head1 = wl ? wlHead(false, f) : band(kindName) + title(null, f) + info(f);
+      const endLine = wl ? `<div class="end"><span>انتهت الأسئلة — مع تمنياتي لكم بالتوفيق</span><span>معلّم/ة المبحث: ${esc(wl.teacher || "")}</span></div>` : "";
+      return `<section class="sheet stu">${wm}<div class="in">${head1}${note}<div class="qs">${qh(f.questions)}</div>${endLine}</div>${foot}</section>`; };
     const maxPages = test ? 0 : 2;
     const lockBar = o.locked ? `<span class="lk">${esc(o.locked)}</span>` : `<button onclick="window.print()">طباعة / حفظ PDF</button>`;
+    const keys = o.noKey ? "" : forms.length > 4 ? keyCombined() : forms.map(keyFull).join("");
     const html = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
       <title>${esc(wl ? (wl.exam || o.title) : o.title + " — " + PLATFORM)}</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all';window.__gfOK=1;window.__gfl&&window.__gfl()"><style>${css(o)}</style></head><body>
-      <div class="tb"><span>${esc(kindName)} — ${n} سؤالًا · A4 <span class="fitinfo" id="fitInfo"></span></span>${lockBar}</div>
+      <div class="tb"><span>${esc(kindName)} — ${n} سؤالًا${forms.length > 1 ? " · " + forms.length + " نماذج" : ""} · A4 <span class="fitinfo" id="fitInfo"></span></span>${lockBar}</div>
       ${o.locked ? '<div class="lockwm"><span>نسخة معاينة</span></div>' : ""}
-      <section class="sheet stu">${wm}<div class="in">${head1}${note}<div class="qs">${qh}</div>${endLine}</div>${foot}</section>
-      <section class="sheet">${wm}<div class="in">${head2}
-        <h3 class="sec">الإجابات</h3>${keyGrid}<h3 class="sec">تفصيل الأسئلة</h3>${keyTbl}
-        <h3 class="sec">ربط الأسئلة بالنتاجات</h3><table><thead><tr><th style="width:66px">النتاج</th><th>نص النتاج</th><th style="width:110px">أرقام الأسئلة</th><th style="width:44px">العدد</th></tr></thead><tbody>${spec}</tbody></table>
-      </div>${foot}</section>${fitScript(maxPages)}<script>window.__autoPrint=${o.autoPrint !== false && !o.locked};<\/script></body></html>`;
+      ${forms.map(stuSheet).join("")}${keys}${fitScript(maxPages)}<script>window.__autoPrint=${o.autoPrint !== false && !o.locked};<\/script></body></html>`;
     w.document.write(html); w.document.close();
     return w;
   }

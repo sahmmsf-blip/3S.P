@@ -345,3 +345,18 @@ img.sav{border-radius:50%;object-fit:cover;vertical-align:middle;margin-inline-e
 .qr-k>div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}.qr-k b{display:block;font-size:28px;font-family:var(--f-disp)}.qr-k span{font-size:13px;color:var(--ink-2)}
 @media (max-width:560px){.qr-k{grid-template-columns:1fr 1fr}}
 .chart .vb{fill:var(--accent)}.chart .vb:hover{fill:var(--gold)}
+/* ===== ترويسة الاختبار الرسمي ومعالج جدول المواصفات ===== */
+.ehd{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.ehd-c{display:grid;gap:8px;justify-items:center}
+.ehd-img{width:120px;height:120px;border-radius:16px;border:1.5px dashed var(--line);display:grid;place-items:center;background:#fff;overflow:hidden}
+.ehd-img img{max-width:100%;max-height:100%;object-fit:contain}
+.ofx .lw{display:grid;grid-template-columns:auto 1fr 92px 64px;gap:6px 10px;align-items:center;padding:6px 10px;border-radius:12px}
+.ofx .lw:nth-child(even){background:var(--surface-2)}.ofx .lw.off{opacity:.55}
+.ofx .lw .w{width:84px}.ofx .lw .nq{font:700 15px var(--f-disp);text-align:center}
+.ofx .uh{font-weight:700;color:var(--gold);font-size:13px;margin:10px 0 4px}
+.bpt{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.bpt th{background:var(--accent);color:var(--accent-ink);padding:6px 8px;font-weight:600;text-align:center}
+.bpt td{padding:5px 8px;border-top:1px solid var(--line);text-align:center}.bpt td:first-child{text-align:right}
+.bpt tr.tot td{font-weight:800;background:var(--accent-soft)}.bpt td.short{background:var(--danger-bg,#fde8e8);color:var(--danger)}
+.bpt th.solve{background:#3d5a1e}.bpt th.know{background:#7a5410}
+.ofx .prof{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}

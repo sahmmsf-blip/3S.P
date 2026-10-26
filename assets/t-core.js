@@ -82,7 +82,7 @@
       q(sb.from("units").select("*").order("seq")), q(sb.from("lessons").select("*").order("seq")), all("outcomes", "*", "seq"),
       q(sb.from("tools").select("*").order("sort")), q(sb.from("event_types").select("*").order("sort")),
       all("mastery", "*", "created_at"), all("exam_marks", "*"), all("daily_events", "*", "created_at"), all("attendance", "*"),
-      q(sb.from("exams").select("id,secure_mode,max_violations,mailed_at,tool,paper,differentiated,show_answers,created_at"))
+      exExtra()
     ]);
     S.me = me; S.subject = boot.subject || {}; S.tools = tools; S.eventTypes = ets.filter((e) => e.is_active !== false);
     S.mastery = mastery; S.marks = marks; S.events = events; S.att = att;
@@ -140,8 +140,11 @@
     catch (e) { S.photoPending = []; }
     if (S.photoPending.length && S.cur === "dash") { try { T.route(); } catch (e) {} }
   }
+  // أعمدة إضافية للاختبارات (blueprint بعد هجرة 015؛ وإن لم تُطبَّق بعد تُحمَّل بقية الأعمدة)
+  const EXC = "id,secure_mode,max_violations,mailed_at,tool,paper,differentiated,show_answers,created_at";
+  function exExtra() { return q(sb.from("exams").select(EXC + ",blueprint")).catch(() => q(sb.from("exams").select(EXC))); }
   async function refreshExams() {
-    const [boot, exx] = await Promise.all([rpc("t_bootstrap"), q(sb.from("exams").select("id,secure_mode,max_violations,mailed_at,tool,paper,differentiated,show_answers,created_at"))]);
+    const [boot, exx] = await Promise.all([rpc("t_bootstrap"), exExtra()]);
     const extra = {}; exx.forEach((x) => (extra[x.id] = x));
     S.exams = boot.exams.map((e) => Object.assign({}, e, extra[e.id] || {})); numberExams();
     S.alertsSrv = boot.alerts || []; S.nq = boot.n_questions;

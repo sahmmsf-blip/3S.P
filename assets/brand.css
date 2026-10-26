@@ -528,3 +528,22 @@ table.t .num{text-align:center;font-variant-numeric:tabular-nums}
 .free-strip .fs-t{flex:1;display:grid;gap:2px}.free-strip .fs-t b{font-size:15.5px}.free-strip .fs-t span{font-size:13px;color:var(--ink-2)}
 .nav-free{color:var(--gold)!important;font-weight:700}
 @media (max-width:640px){.free-strip a{flex-wrap:wrap}.free-strip .fs-ic{display:none}.free-strip .btn{width:100%;justify-content:center}}
+/* ===== ورقة الاختبار الرسمي الإلكترونية (الأول/النهائي) ===== */
+.qcard.ppr{padding:22px 26px;background:#fff;color:#141a0c;border:1.5px solid #c9cfba;box-shadow:0 14px 40px -24px rgba(0,0,0,.35)}
+.ppr-h{display:grid;grid-template-columns:96px 1fr 96px;gap:12px;align-items:center;border-bottom:3px double #2f3c18;padding-bottom:10px}
+.ppr-lg{display:grid;place-items:center;height:92px}.ppr-lg img{max-width:92px;max-height:92px;object-fit:contain}
+.ppr-c{text-align:center;display:grid;gap:2px;font-size:14.5px;line-height:1.7}.ppr-c b{font-size:16px}
+.ppr-t{text-align:center;margin:12px 0 8px}.ppr-t h2{font-family:Amiri,var(--f-disp),serif;font-size:26px;margin:0;color:#2f3c18}
+.ppr-t span{display:inline-block;margin-top:4px;border:1.5px solid #a8771f;border-radius:999px;padding:1px 14px;font-size:13.5px;font-weight:600}
+.ppr-i{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 14px;border:1.3px solid #9aa386;border-radius:12px;padding:8px 12px;font-size:13.5px}
+.ppr-n{margin:10px 0 4px;background:#faf6ea;border:1.3px dashed #a8771f;border-radius:10px;padding:7px 12px;font-size:13.5px;line-height:1.8}
+.ppr-q{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:12px}
+.pq{border:1.3px solid #d5d9c8;border-radius:14px;padding:12px 14px;scroll-margin-top:110px}
+.pq-h{display:flex;gap:10px;align-items:flex-start}.pq-h .stem{flex:1;font-size:17px}
+.pq-n{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:#2f3c18;color:#fff;font:700 14px Arial,sans-serif;border-bottom:3px solid #a8771f;margin-top:2px}
+.pq-f{flex:none;border:0;background:none;color:#9aa386;cursor:pointer;padding:4px;border-radius:8px}.pq-f.on{color:var(--gold);background:var(--gold-soft)}
+.ppr .opts{margin-top:10px;grid-template-columns:1fr 1fr}.ppr .opt{padding:10px 12px}
+.ppr-end{text-align:center;margin-top:16px;padding-top:10px;border-top:1.5px solid #2f3c18;font-weight:700;color:#2f3c18}
+@media (max-width:720px){.ppr-h{grid-template-columns:64px 1fr 64px}.ppr-lg img{max-width:62px;max-height:62px}.ppr-i{grid-template-columns:1fr 1fr}.ppr .opts{grid-template-columns:1fr}}
+.ppr .opt{background:#fff;color:#141a0c;border-color:#c9cfba}.ppr .opt:hover{background:#f6f7f1}.ppr .opt .L{background:#eef0e6;color:#2f3c18}
+.ppr .opt[aria-checked="true"]{background:#eef3e2;border-color:#3d5a1e}.ppr .opt[aria-checked="true"] .L{background:#3d5a1e;color:#fff}

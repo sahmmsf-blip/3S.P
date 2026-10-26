@@ -29,6 +29,12 @@
           <div class="field"><span>احتساب مستوى النتاج عند تعدد القياسات</span><div class="seg" id="sRule"><button data-r="highest" aria-pressed="${c.rule !== "latest"}">أعلى مستوى</button><button data-r="latest" aria-pressed="${c.rule === "latest"}">أحدث قياس</button></div></div>
           <div class="note" id="capNote"></div>
           <p class="tiny">المادة (4)-أ: اختبار كتابي 30% · تقويمات مستمرة قائمة على الأداء 30% · اختبار كتابي نهائي 40%.</p></div></div>
+        <div class="card pad" style="grid-column:1/-1"><h3 style="font-size:16px;margin-bottom:6px">${ic("file", "sm")} ترويسة الاختبار الرسمي (الأول والنهائي)</h3>
+          <p class="tiny" style="margin-bottom:12px">تظهر أعلى ورقة الاختبار الإلكترونية عند كل طالب: «المملكة الأردنية الهاشمية / وزارة التربية والتعليم» مع شعار الوزارة يمينًا وشعار المدرسة يسارًا، واسم المدرسة والمديرية.</p>
+          <div class="ehd">${[["logo_min", "شعار الوزارة"], ["logo_school", "شعار المدرسة"]].map(([k, t]) => `<div class="ehd-c"><div class="ehd-img" id="hImg_${k}">${(me.exam_header || {})[k] ? `<img src="${esc(me.exam_header[k])}" alt="${t}">` : `<span class="tiny">لا صورة</span>`}</div>
+            <label class="btn outline sm">${ic("file", "sm")}${t}<input type="file" accept="image/*" class="hide" data-hk="${k}"></label>${(me.exam_header || {})[k] ? `<button class="btn ghost sm" data-hdel="${k}">إزالة</button>` : ""}</div>`).join("")}
+            <div class="ehd-c grow" style="min-width:240px"><label class="field"><span>اسم المدرسة في الترويسة</span><input class="input" id="hSchool" value="${esc((me.exam_header || {}).school || me.school || "")}"></label>
+              <label class="field"><span>المديرية</span><input class="input" id="hDir" value="${esc((me.exam_header || {}).directorate || me.directorate || "")}" placeholder="لواء وادي السير"></label></div></div></div>
         <div class="card pad"><h3 style="font-size:16px;margin-bottom:14px">${ic("mail", "sm")} الإشعارات بالبريد</h3>
           <label class="check"><input type="checkbox" id="sNotify" ${me.notify_email !== false ? "checked" : ""}> أرسل لي بعد إغلاق كل اختبار ملف Excel بالعلامات وحالات الغش</label>
           <p class="tiny" style="margin-top:10px">يصل الملف إلى: <b dir="ltr">${esc(email)}</b>. ويمكنك إرساله يدويًّا من صفحة أي اختبار بزر «أرسله لبريدي».</p>
@@ -41,7 +47,7 @@
           <div class="fields three">${[["top", "العشرة الأوائل (بطاقة الشرف)"], ["mid", "الوسط"], ["low", "الأواخر (بلا رقم ترتيب)"]].map(([k, t]) =>
             `<label class="field"><span>${t}</span><textarea class="input hm" data-k="${k}" rows="5">${esc(((me.honor_msgs || {})[k]) || U.HONOR[k])}</textarea></label>`).join("")}</div>
           <button class="btn sm ghost" id="sHonorReset" style="margin-top:8px">استعادة الرسائل الافتراضية</button></div></div>
-        <p class="tiny" style="text-align:center;margin-top:20px">منصة السهم العلمي للاختبارات الذكية وتقويم الأداء · الإصدار 4.0 — الدفتر الجانبي ومنصة الاختبارات في منظومة واحدة</p>`;
+        <p class="tiny" style="text-align:center;margin-top:20px">منصة السهم العلمي للاختبارات الذكية وتقويم الأداء · الإصدار 4.1 — الدفتر الجانبي ومنصة الاختبارات في منظومة واحدة</p>`;
       const cap = () => { const m = +el.querySelector("#sMax").value || 0, p1 = +el.querySelector("#sP1").value || 0, p2 = +el.querySelector("#sP2").value || 0, p3 = +el.querySelector("#sP3").value || 0;
         el.querySelector("#capNote").innerHTML = `الأول ${T.nf(m * p1 / 100)} · الثاني ${T.nf(m * p2 / 100)} · النهائي ${T.nf(m * p3 / 100)} — المجموع ${T.nf(m * (p1 + p2 + p3) / 100)} من ${m}` +
           (p1 + p2 + p3 !== 100 ? ' <b style="color:var(--danger)">(النسب لا تساوي ١٠٠٪)</b>' : ""); };
@@ -71,6 +77,21 @@
           const r = await T.sb.auth.updateUser({ password: p }); closeSheet(); toast(r.error ? "تعذّر التغيير: " + r.error.message : "تم تغيير كلمة السر", !!r.error); };
       };
       el.querySelector("#sBackup").onclick = () => backup().catch((e) => toast(e.message, true));
+      // ترويسة الاختبار الرسمي: الشعاران يُصغَّران إلى 240px ويُحفظان في حساب المعلّم
+      const saveHdr = async (patch) => { const h = Object.assign({}, S.me.exam_header || {}, patch);
+        try { await T.q(T.sb.from("teachers").update({ exam_header: h }).eq("id", S.me.id)); S.me.exam_header = h; toast("حُفظت ترويسة الاختبار"); return true; } catch (e) { toast(e.message, true); return false; } };
+      const shrink = (file) => new Promise((res, rej) => { const fr = new FileReader();
+        fr.onerror = () => rej(new Error("تعذّرت قراءة الصورة"));
+        fr.onload = () => { const img = new Image();
+          img.onload = () => { const k = Math.min(1, 240 / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+            const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL("image/jpeg", 0.9)); };
+          img.onerror = () => rej(new Error("تعذّرت قراءة الصورة")); img.src = fr.result; };
+        fr.readAsDataURL(file); });
+      el.querySelectorAll("[data-hk]").forEach((inp) => (inp.onchange = async () => { const f = inp.files[0]; if (!f) return;
+        try { const d = await shrink(f); if (await saveHdr({ [inp.dataset.hk]: d })) T.route(); } catch (e) { toast(e.message, true); } }));
+      el.querySelectorAll("[data-hdel]").forEach((b) => (b.onclick = async () => { if (await saveHdr({ [b.dataset.hdel]: null })) T.route(); }));
+      el.querySelector("#hSchool").onchange = () => saveHdr({ school: el.querySelector("#hSchool").value.trim() });
+      el.querySelector("#hDir").onchange = () => saveHdr({ directorate: el.querySelector("#hDir").value.trim() });
       let th;
       const saveHonor = () => { clearTimeout(th); th = setTimeout(async () => {
         const m = {}; el.querySelectorAll(".hm").forEach((t) => { const v = t.value.trim(); if (v && v !== U.HONOR[t.dataset.k]) m[t.dataset.k] = v.slice(0, 600); });

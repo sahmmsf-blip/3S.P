@@ -67,7 +67,7 @@
       const r = await T.rpc("t_exam_action", { p_id: id, p_action: act });
       if (act === "duplicate" && r && r.id) { const src = S.exams.find((e) => e.id === id) || {};   // النسخة ترث نوع الأداة والتمايز والحماية
         await T.q(T.sb.from("exams").update({ tool: src.tool || null, paper: !!src.paper, differentiated: !!src.differentiated, show_answers: !!src.show_answers,
-          secure_mode: src.secure_mode !== false, max_violations: src.max_violations || 0 }).eq("id", r.id)); }
+          secure_mode: src.secure_mode !== false, max_violations: src.max_violations || 0, ...(S.calcCol ? { allow_calc: src.allow_calc !== false } : {}) }).eq("id", r.id)); }
       toast({ publish: "نُشر الاختبار", open_now: "فُتح الاختبار", close_now: "أُغلق الاختبار", reopen: "أُعيد فتح الاختبار", new_code: "رمز جديد: " + ((r && r.lab_code) || ""),
         duplicate: "أُنشئت نسخة (مسودة)", delete: "حُذف", draft: "صار مسودة" }[act] || "تم");
       await T.refreshExams(); if (act === "delete" && S.cur === "exam") T.go("#exams"); else T.route();
@@ -114,6 +114,7 @@
       <div class="row wrap" style="margin-top:10px;gap:14px"><label class="check"><input type="checkbox" id="eQS" ${e.shuffle_questions ? "checked" : ""}> خلط ترتيب الأسئلة</label>
         <label class="check"><input type="checkbox" id="eOS" ${e.shuffle_options ? "checked" : ""}> خلط الخيارات</label><label class="check"><input type="checkbox" id="eB" ${e.allow_back ? "checked" : ""}> السماح بالرجوع</label></div>
       <label class="check" style="margin-top:10px"><input type="checkbox" id="eAns" ${e.show_answers ? "checked" : ""}> <b>إظهار الإجابات الصحيحة للطلبة بعد انتهاء وقت الأداة للجميع</b></label>
+      ${S.calcCol ? `<label class="check" style="margin-top:10px"><input type="checkbox" id="eCalc" ${e.allow_calc !== false ? "checked" : ""}> <b>السماح بالآلة الحاسبة العلمية</b> <span class="tiny">(نمط fx-82MS المعتمدة في الوزارة — زر يفتحها الطالب عند الحاجة بجانب السؤال)</span></label>` : ""}
       <div class="tiny" style="margin:4px 0 0">يرى كل طالب أسئلته وإجابته والإجابة الصحيحة في «نتائجي» — فقط بعد أن يُغلق الاختبار أو ورقة العمل وينتهي وقت آخر طالب، فلا تتسرّب الإجابات لمن لم يحلّ بعد.</div>
       <div class="card pad" style="margin-top:14px;background:var(--gold-soft);border-color:transparent"><b>${ic("shield", "sm")} الحماية من الغش</b>
         <div class="row wrap" style="margin-top:10px;gap:14px"><label class="check"><input type="checkbox" id="eSec" ${e.secure_mode !== false ? "checked" : ""}> وضع الحماية (علامة مائية باسم الطالب، منع النسخ واللصق والطباعة، رصد الخروج ولقطة الشاشة)</label>
@@ -234,7 +235,8 @@
         const r = await T.rpc("t_save_exam", { p });
         const eid = (r && r.id) || id;
         if (eid) await T.q(T.sb.from("exams").update({ secure_mode: !paper && b.querySelector("#eSec").checked, max_violations: Math.max(0, +b.querySelector("#eMV").value || 0),
-          tool: isWs ? "worksheet" : x && x.tool === "exit" ? "exit" : null, paper, differentiated: dif, show_answers: b.querySelector("#eAns").checked }).eq("id", eid));
+          tool: isWs ? "worksheet" : x && x.tool === "exit" ? "exit" : null, paper, differentiated: dif, show_answers: b.querySelector("#eAns").checked,
+          ...(S.calcCol && b.querySelector("#eCalc") ? { allow_calc: b.querySelector("#eCalc").checked } : {}) }).eq("id", eid));
         closeSheet(); toast(publish ? (paper ? "اعتُمدت — افتحها لتوليد أوراق الطلبة وطباعتها" : "نُشر" + (r && r.lab_code ? " — رمز الجلسة " + r.lab_code : "")) : "حُفظ كمسودة");
         await T.refreshExams();
         if (publish && paper && eid) T.go("#exam/" + eid); else T.route();
@@ -298,6 +300,7 @@
           <label class="check"><input type="checkbox" id="oF" ${e.require_fullscreen ? "checked" : ""}> ملء الشاشة إجباري</label>
           <label class="check"><input type="checkbox" id="oB" ${e.allow_back !== false ? "checked" : ""}> التنقّل بين الأسئلة</label>
           <label class="row" style="gap:6px"><span class="tiny">إغلاق المحاولة بعد</span><input class="input mono sm" type="number" min="0" max="50" id="oMV" value="${e.max_violations || 0}" style="width:70px"><span class="tiny">مخالفات</span></label></div>
+        ${S.calcCol ? `<label class="check" style="margin-top:10px"><input type="checkbox" id="oCalc" ${e.allow_calc !== false ? "checked" : ""}> <b>السماح بالآلة الحاسبة العلمية</b> <span class="tiny">(نمط fx-82MS المعتمدة في الوزارة — زر يفتحها الطالب عند الحاجة بجانب السؤال)</span></label>` : ""}
         <p class="tiny" style="margin-top:8px">محاولة واحدة لكل طالب، والأسئلة والخيارات مخلوطة، والنتيجة لا تظهر للطالب حتى يُغلق الاختبار. افتحه أو أغلقه بزر من قائمة الاختبارات في أي وقت.</p></div>
       <div class="foot"><button class="btn primary grow" id="oSaveP">${ic("check", "sm")}حفظ ونشر</button><button class="btn outline grow" id="oSaveD">حفظ كمسودة</button></div>`, true);
     const $b = (q) => b.querySelector(q);
@@ -368,7 +371,7 @@
       try {
         const r = await T.rpc("t_save_exam", { p }), eid = (r && r.id) || id;
         if (eid) await T.q(T.sb.from("exams").update({ secure_mode: $b("#oSec").checked, max_violations: Math.max(0, +$b("#oMV").value || 0), tool: null, paper: false,
-          differentiated: false, show_answers: false, blueprint: { v: 1, kind: st.kind, n: st.n, prof: st.prof, pc: st.pc, solve: st.solve, on: st.on, w: st.w } }).eq("id", eid));
+          differentiated: false, show_answers: false, ...(S.calcCol && $b("#oCalc") ? { allow_calc: $b("#oCalc").checked } : {}), blueprint: { v: 1, kind: st.kind, n: st.n, prof: st.prof, pc: st.pc, solve: st.solve, on: st.on, w: st.w } }).eq("id", eid));
         closeSheet(); toast(publish ? "نُشر الاختبار الرسمي" + (r && r.lab_code ? " — رمز الجلسة " + r.lab_code : "") : "حُفظ كمسودة");
         await T.refreshExams(); T.route();
       } catch (err) { toast(err.message, true); U.spin(btn, false); }

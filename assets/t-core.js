@@ -142,7 +142,11 @@
   }
   // أعمدة إضافية للاختبارات (blueprint بعد هجرة 015؛ وإن لم تُطبَّق بعد تُحمَّل بقية الأعمدة)
   const EXC = "id,secure_mode,max_violations,mailed_at,tool,paper,differentiated,show_answers,created_at";
-  function exExtra() { return q(sb.from("exams").select(EXC + ",blueprint")).catch(() => q(sb.from("exams").select(EXC))); }
+  // allow_calc (الآلة الحاسبة) يظهر بعد تنفيذ 016؛ قبلها نرجع للأعمدة السابقة دون أي عطل
+  function exExtra() {
+    return q(sb.from("exams").select(EXC + ",blueprint,allow_calc")).then((r) => { S.calcCol = true; return r; })
+      .catch(() => { S.calcCol = false; return q(sb.from("exams").select(EXC + ",blueprint")).catch(() => q(sb.from("exams").select(EXC))); });
+  }
   async function refreshExams() {
     const [boot, exx] = await Promise.all([rpc("t_bootstrap"), exExtra()]);
     const extra = {}; exx.forEach((x) => (extra[x.id] = x));

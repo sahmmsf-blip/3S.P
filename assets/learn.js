@@ -267,7 +267,11 @@
       <div class="card pad pq"><div class="stem">${esc(q.s)}</div>${tbl(q.tb)}<div class="opts">${opts.map((o, j) => `<button class="opt" data-k="${o.k}"><span class="L">${L[j]}</span><span class="grow">${esc(o.t)}</span></button>`).join("")}</div><div id="pFb"></div></div>`;
     $("pX").onclick = endPractice;
     document.querySelectorAll(".pq .opt").forEach((b) => (b.onclick = () => answer(+b.dataset.k)));
+    calcOn(() => { const nx = document.getElementById("pN"); return { el: document.querySelector("#ln .pq"), label: "تدريب · " + (R.i + 1) + " من " + R.qs.length, next: nx ? () => nx.click() : "off" }; });
   }
+  // الآلة الحاسبة العلمية (fx-82MS) بجانب السؤال دون أن تغطيه
+  function calcOn(q) { if (window.SahmCalc) window.SahmCalc.attach({ root: $("ln"), q }); }
+  function calcOff() { if (window.SahmCalc) window.SahmCalc.detach(); }
   function answer(k) {
     const q = R.qs[R.i], good = k === q.c; R.done++; if (good) R.ok++; record(q.id, good);
     document.querySelectorAll(".pq .opt").forEach((b) => { b.disabled = true; b.classList.add("rvo"); const kk = +b.dataset.k; if (kk === q.c) b.classList.add("is-ok"); if (kk === k && !good) b.classList.add("is-bad"); });
@@ -277,6 +281,7 @@
     $("pN").onclick = () => { if (last) endPractice(); else { R.i++; drawQ(); window.scrollTo(0, 0); } }; $("pN").focus();
   }
   function endPractice() {
+    calcOff();
     if (R.done) ping("practice", R.done);
     const n = R.done, p = n ? Math.round((R.ok / n) * 100) : 0, mk = mistakesAll().length;
     if (!n) { location.hash = ""; return; }
@@ -317,8 +322,10 @@
     document.querySelectorAll(".pq .opt").forEach((b) => (b.onclick = () => { GD.ans[q.id] = +b.dataset.k; document.querySelectorAll(".pq .opt").forEach((z) => z.setAttribute("aria-checked", z === b)); }));
     const next = () => { if (GD.i === n - 1) diagResult(); else { GD.i++; drawD(); window.scrollTo(0, 0); } };
     $("dN").onclick = next; $("dS").onclick = () => { delete GD.ans[q.id]; next(); }; $("dP").onclick = () => { GD.i--; drawD(); };
+    calcOn(() => ({ el: document.querySelector("#ln .pq"), label: "تشخيص الوحدة " + GD.u + " · " + (GD.i + 1) + " من " + n, prev: GD.i ? () => $("dP").click() : "off", next: () => $("dN").click() }));
   }
   async function diagResult() {
+    calcOff();
     const per = {}; let ok = 0;
     GD.qs.forEach((q) => { const c = q.id.split("-")[0], good = GD.ans[q.id] === q.c; per[c] = per[c] || [0, 0]; per[c][1]++; if (good) { per[c][0]++; ok++; } if (GD.ans[q.id] != null) record(q.id, good); });
     const pct = Math.round((ok / GD.qs.length) * 100); P.diag[GD.u] = { at: Date.now(), pct, per }; save(); ping("diag");
@@ -627,6 +634,7 @@
     if (k === "progress") return progressPage();
     if ((k === "practice" && !R.qs.length) || (k === "diagrun" && !GD.qs.length)) { location.hash = ""; return; }
     if (k === "practice" || k === "diagrun") return;
+    calcOff();
     home().catch(() => ($("ln").innerHTML = '<div class="card pad">تعذّر التحميل — تحقّق من الإنترنت وأعد المحاولة.</div>'));
     window.scrollTo(0, 0);
   }
